@@ -1,12 +1,31 @@
 let Book = require('../models/book');
+let Author = require('../models/author');
+let Genre = require('../models/genre');
+let BookInstance = require('../models/bookinstance');
 
-exports.index = function(req, res) {
-    res.send('NOT IMPLEMENTED: Site Home Page');
+
+exports.index = async function (req, res) {
+    
+    results = {
+        book_count: await Book.countDocuments({}).exec(), // Pass an empty object as match condition to find all documents of this collection.
+        book_instance_count: await BookInstance.countDocuments({}).exec(),
+        book_instance_available_count: await BookInstance.countDocuments({status:'Available'}).exec(),  
+        author_count: await Author.countDocuments({}).exec(), 
+        genre_count: await Genre.countDocuments({}).exec(),  
+    };
+
+    res.render('index', { title: 'LibX Library Home', data: results });
+    
 };
 
 // Display list of all books.
-exports.book_list = function(req, res) {
-    res.send('NOT IMPLEMENTED: Book list');
+exports.book_list = async function(req, res, next) {
+    
+    await Book.find({}, 'title author')
+        .populate('author')
+        .exec()
+        .then( list_books => res.render('book_list', {title: 'Book List', book_list: list_books} ) )
+        .catch( err => next(err) )
 };
 
 // Display detail page for a specific book.
