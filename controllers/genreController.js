@@ -1,4 +1,5 @@
 let Genre = require('../models/genre');
+let Book = require('../models/book');
 
 // Display list of all Genre.
 exports.genre_list = async (req, res, next) => {
@@ -12,8 +13,12 @@ exports.genre_list = async (req, res, next) => {
 };
 
 // Display detail page for a specific Genre.
-exports.genre_detail = function(req, res) {
-    res.send('NOT IMPLEMENTED: Genre detail: ' + req.params.id);
+exports.genre_detail = async (req, res) => {
+    result = {
+        genre: await Genre.findById(req.params.id).exec(),
+        genre_books: await Book.find({ 'genre': req.params.id }).exec()
+    }
+    res.render('genre_detail', { title: 'Genre Detail', genre: result.genre, genre_books: result.genre_books });
 };
 
 // Display Genre create form on GET.
