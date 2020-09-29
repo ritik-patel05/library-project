@@ -1,5 +1,6 @@
 let Genre = require('../models/genre');
 let Book = require('../models/book');
+const genre = require('../models/genre');
 
 // Display list of all Genre.
 exports.genre_list = async (req, res, next) => {
@@ -17,6 +18,11 @@ exports.genre_detail = async (req, res) => {
     result = {
         genre: await Genre.findById(req.params.id).exec(),
         genre_books: await Book.find({ 'genre': req.params.id }).exec()
+    }
+    if (result.genre == null) { // No results.
+        let err = new Error('Genre not found');
+        err.status = 404;
+        return next(err);
     }
     res.render('genre_detail', { title: 'Genre Detail', genre: result.genre, genre_books: result.genre_books });
 };
