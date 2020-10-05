@@ -1,0 +1,45 @@
+extends layout
+
+block content
+    h1 #{title}
+
+    form(method='POST' action='')
+        div
+            label(for='title') Title:
+            input(type='text' id='title' name='title' placeholder='Name of book' required='true' value=(undefined===book? '' : book.title))
+
+        div
+            label(for='author') Author:
+            select(type='select' id='author' name='author' required='true' placeholder='Select author')
+                -authors.sort( (a, b) => { let textA = a.family_name.toUpperCase(); let textB = b.family_name.toUpperCase(); return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;  }); 
+                for author in authors
+                    if book 
+                        option(value=author._id selected=(author._id.toString()==book.author ? 'selected' : false)) #{author.name}
+                    else 
+                        option(value=author._id) #{author.name}
+                
+
+        div
+            label(for='summary') Summary:
+            textarea(id='summary' placeholder='Summary' name='summary' required='true') #{book===undefined ? '' : book.summary}
+        
+        div
+            label(for='isbn') ISBN:
+            input(type='text' id='isbn' placeholder='ISBN13' name='isbn' value=(book===undefined ? '' : book))
+
+        div
+            label Genre:
+            div
+                for genre in genres
+                    div
+                        input(type='checkbox' name='genre' id=genre._id value=genre._id checked=genre.checked)
+                        label(for=genre._id) #{genre.name}
+
+        div
+            button(type='submit' class='btn') Submit
+
+        
+    if errors
+        ul  
+            for error in errors
+                li #{error.msg}
