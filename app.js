@@ -16,10 +16,14 @@ let mongoDB = 'mongodb+srv://ritik:ritikpatel@cluster0.pijjz.mongodb.net/library
 mongoose.connect(mongoDB, { useNewUrlParser: true , useUnifiedTopology: true});
 let db = mongoose.connection;
 db.on('error', console.error.bind(console, 'MongoDB connection error:') );
+// Make Mongoose use `findOneAndUpdate()`. Note that this option is `true`
+// by default, you need to set it to false.
+mongoose.set('useFindAndModify', false);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
+
 
 // Set up Middleware
 app.use(logger('dev')); // Log every request

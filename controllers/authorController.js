@@ -1,7 +1,7 @@
 let Author = require('../models/author');
 let Book = require('../models/book');
 let validator = require('express-validator');
-const { check, body } = require('express-validator');
+const { check, body, validationResult } = require('express-validator');
 
 // Display list of all Authors.
 exports.author_list = async (req, res, next) => {
@@ -100,13 +100,43 @@ exports.author_create_post = [
 ]
 
 // Display Author delete form on GET.
-exports.author_delete_get = function(req, res) {
-    res.send('NOT IMPLEMENTED: Author delete GET');
+exports.author_delete_get = async (req, res, next) => {
+    
+    let results = {
+        author: await Author.findById(req.params.id).exec(),
+        authors_books: await Book.find({ 'author': req.params.id }).exec()
+    }
+
+    // If  findById() returns no results the author is not in the database. In this case there is nothing to delete, so we immediately render the list of all authors. 
+    if(results.author == null) {
+        res.redirect('/catalog/authors');
+    }
+    res.render('author_delete', { title: 'Delete Author', author: results.author, author_books: results.authors_books });
 };
 
 // Handle Author delete on POST.
-exports.author_delete_post = function(req, res) {
-    res.send('NOT IMPLEMENTED: Author delete POST');
+exports.author_delete_post = async (req, res, next) => {
+    
+    results = {
+        author: await Author.findById(req.body.authorid).exec(),
+        authors_books: await Book.find({ 'author': req.body.authorid }).exec()
+    }
+
+    //Handle error.
+
+    // Success.
+    if( results.authors_books.length > 0) {
+        // Author has books. Render in same way as for GET route.
+        res.render('author_delete', { title: 'Delete Author', author: results.author, author_books: results.authors_boos });
+        return;
+    } else {
+        // Author has no books. Delete object and redirect to the list of authors.
+        console.log("here ", req.body.authorid);
+        await Author.findByIdAndRemove(req.body.authorid)
+            .then( () => res.redirect('/catalog/authors'))
+            .catch( err => next(err) )
+        console.log("finish");
+    }
 };
 
 // Display Author update form on GET.
