@@ -1,6 +1,5 @@
 let Author = require('../models/author');
 let Book = require('../models/book');
-let validator = require('express-validator');
 const { check, body, validationResult } = require('express-validator');
 
 // Display list of all Authors.
@@ -117,6 +116,8 @@ exports.author_delete_get = async (req, res, next) => {
 // Handle Author delete on POST.
 exports.author_delete_post = async (req, res, next) => {
     
+    // Assume the post has valid id (ie no validation/sanitization).
+    
     results = {
         author: await Author.findById(req.body.authorid).exec(),
         authors_books: await Book.find({ 'author': req.body.authorid }).exec()
@@ -140,11 +141,69 @@ exports.author_delete_post = async (req, res, next) => {
 };
 
 // Display Author update form on GET.
-exports.author_update_get = function(req, res) {
-    res.send('NOT IMPLEMENTED: Author update GET');
+exports.author_update_get = async (req, res, next) => {
+    
+    await Author.findById(req.params.id).exec()
+                .then( (author) => {
+                    if(author == null) {
+                        let err = new Error('Author not found.');
+                        err.status = 404;
+                        return next(err);
+                    }
+                    //Success.
+                    res.render('author_form', { title: 'Upate Author', author: author });
+                })
 };
 
 // Handle Author update on POST.
-exports.author_update_post = function(req, res) {
-    res.send('NOT IMPLEMENTED: Author update POST');
-};
+exports.author_update_post = [
+
+    // Validate fields.
+    // Validate fields.
+    check('first_name').
+        isLength({ min: 1} ).trim().withMessage('First Name must be specified.')
+        .isAlphanumeric().withMessage('First Name has non-alphanumeric characters.') ,
+    check('family_name')
+        .isLength({ min: 1} ).trim().withMessage('Family Name must be specified.')
+        .isAlphanumeric().withMessage('Family Name has non-alphanumeric characters.') ,
+    check('date_of_birth', 'Invalid date of birth' )
+        .optional({ checkFalsy: true }).isISO8601() ,
+    check('date_of_death', 'Invalid date of death')
+        .optional({ checkFalsy: true }).isISO8601(),
+
+    // Sanitize fields.
+    body('first_name').escape(),
+    body('family_name').escape(),
+    body('date_of_birth').toDate(),
+    body('date_of_death').toDate(),
+
+    // Process request after validation and sanitization.
+    async (req, res, next) => {
+
+        // Extract the validation errors from a request.
+        const errors = validationResult(req);
+
+        // Create Author object with escaped and trimmed date (and the old id!)
+        let author = new Author(
+            {
+                first_name: req.body.first_name,
+                family_name: req.body.family_name,
+                date_of_birth: req.body.date_of_birth,
+                date_of_death: req.body.date_of_death,
+                _id: req.params.id
+            }
+        );
+
+        if (!errors.isEmpty()) {
+            // There are errors. Render the form again with sanitized values and error messages.
+            res.render('author_form', { title: 'Update Author', author: author, errors: errors.array() });
+            return;
+        } else {
+            // Data from form is valid. Update the record.
+            await Author.findByIdAndUpdate(req.params.id, author).exec()
+                        .then( theauthor => res.redirect(theauthor.url) )
+                        .catch(  err => next(err) );
+        }
+    }
+    
+]

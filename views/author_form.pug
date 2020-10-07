@@ -7,16 +7,19 @@ block content
         div
             label(for='first_name') First Name:
             input(type='text' id='first_name' name='first_name' required='true' value=(undefined===author? '' :author.first_name))
-            
+
+        div    
             label(for='family_name') Family Name:
             input(type='text' id='family_name' name='family_name' required='true' value=(undefined===author? '' :author.family_name))
 
+        div
             label(for='date_of_birth') Date of birth:
             input(type='date' id='date_of_birth' name='date_of_birth'  value=(undefined===author ? '' : author.date_of_birth))
 
+        div
             label(for='date_of_birth') Date of death:
             input(type='date' id='date_of_death' name='date_of_death'  value=(undefined===author ? '' : author.date_of_death))
-
+        div
             button(class='btn' type='submit') Submit
     
     if errors

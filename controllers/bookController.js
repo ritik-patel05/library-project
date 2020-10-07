@@ -2,7 +2,7 @@ let Book = require('../models/book');
 let Author = require('../models/author');
 let Genre = require('../models/genre');
 let BookInstance = require('../models/bookinstance');
-const validator = require('express-validator');
+// const validator = require('express-validator');
 const { check, body, validationResult } = require('express-validator');
 
 
@@ -131,13 +131,45 @@ exports.book_create_post = [
 ]
 
 // Display book delete form on GET.
-exports.book_delete_get = function(req, res) {
-    res.send('NOT IMPLEMENTED: Book delete GET');
+exports.book_delete_get = async (req, res) => {
+    
+    results = {
+        book: await Book.findById(req.params.id)
+                        .populate('author').populate('genre').exec(),
+        book_bookinstances: await BookInstance.find({ 'book': req.params.id }).exec()
+    }
+
+    // No results.
+    if(results.book == null) {
+        res.redirect('/catalog/books');
+    }
+
+    res.render('book_delete', { title: 'Delete Book', book: results.book, book_instances: results.book_bookinstances });
 };
 
 // Handle book delete on POST.
-exports.book_delete_post = function(req, res) {
-    res.send('NOT IMPLEMENTED: Book delete POST');
+exports.book_delete_post = async (req, res, next) => {
+    
+    // Assume the post has valid id (ie no validation/sanitization).
+    results = {
+        book: Book.findById(req.body.id).populate('author').populate('genre').exec(),
+        book_bookinstances: BookInstance.find({ 'book': req.body.id }).exec()
+    }
+
+    //Handle Error
+
+    //Success.
+    if (results.book_bookinstances.length > 0) {
+        // Book has book_instance. Render in same ay as for GET route.
+        res.render('book_delete', { title: 'Delete Book', book: results.book, book_instances: results.book_bookinstances });
+        return;
+    } else {
+        // Book has no BookInstance objects. Delete object and redirect to the list of books.
+        Book.findByIdAndDelete(req.body.id).exec()
+            .then( () => red.redirect('/catalog/books'))
+            .catch( err => next(err) );
+    }
+
 };
 
 // Display book update form on GET.
