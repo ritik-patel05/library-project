@@ -3,12 +3,17 @@ let express = require('express');
 let path = require('path');
 let cookieParser = require('cookie-parser');
 let logger = require('morgan');
+let helmet = require('helmet');
+let compression = require('compression');
 
 let indexRouter = require('./routes/index');
 let usersRouter = require('./routes/users');
 let catalogRouter = require('./routes/catalog'); 
 
 let app = express();
+
+app.use(helmet()); // Protect website against well known vulnerabilities. It can set appropriate HTTP headers that help protect your app from well-known web vulnerabilities 
+app.use(compression()); // compress all routes.
 
 // Set up mongoose connection
 let mongoose = require('mongoose');
